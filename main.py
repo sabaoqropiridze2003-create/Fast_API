@@ -24,7 +24,7 @@ app = FastAPI()
 # def delete_product(id: int):
 #     return {"message": "deleted product", "deleted product with id": id}
 
-# დავალე 38
+# დავალება 38
 
 
 movies = [
