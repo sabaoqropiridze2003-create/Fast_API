@@ -8,6 +8,7 @@ from alembic import context
 from app.database import Base, DATABASE_URL
 from app.models.student import Student, StudentSubject
 from app.models.subject import Subject
+from app.models.user import User
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
