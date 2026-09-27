@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse, RefreshTokenSchema, UserUpdate
+from app.schemas.user import UserCreate, UserLogin, UserResponse, RefreshTokenSchema, UserUpdate, AdminUserUpdate
 from app.security import (
     hash_password,
     verify_password,
@@ -111,6 +111,40 @@ def update_me(
     db.refresh(current_user)
 
     return current_user
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def update_user_by_admin(
+    user_id: int,
+    user_update: AdminUserUpdate,
+    current_user: User = Depends(require_admin), # მხოლო ადმინს ეძლევა უფლება
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    if current_user.id == user_id and "role" in update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Admins cannot change their own role",
+        )
+
+    if "username" in update_data and update_data["username"] != user.username:
+        if db.query(User).filter(User.username == update_data["username"]).first():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already in use")
+
+    if "email" in update_data and update_data["email"] != user.email:
+        if db.query(User).filter(User.email == update_data["email"]).first():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
+
+    for field, value in update_data.items():
+        setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 @router.get("/", response_model=List[UserResponse])

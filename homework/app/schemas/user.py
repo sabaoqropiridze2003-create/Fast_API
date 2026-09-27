@@ -40,5 +40,10 @@ class RefreshTokenSchema(BaseModel):
     refresh_token: str
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
+    username: str | None = Field(None, min_length=3, max_length=50)
+    email: EmailStr | None = Field(None)
+
+class AdminUserUpdate(BaseModel):
+    username: str | None = Field(default=None, min_length=3, max_length=50)
+    email: EmailStr | None = Field(default=None)
+    role: str | None = Field(default=None)
