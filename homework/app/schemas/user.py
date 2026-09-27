@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Optional
 
 
 class UserCreate(BaseModel):
@@ -33,3 +34,10 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class RefreshTokenSchema(BaseModel):
+    refresh_token: str
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
