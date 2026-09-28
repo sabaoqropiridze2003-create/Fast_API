@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 
@@ -17,11 +17,19 @@ from app.security import (
     ALGORITHM,
 )
 
+import asyncio
+
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+async def send_welcome_email(email: str):
+    print(f'Sending welcome email to "{email}"')
+    await asyncio.sleep(3)
+    print(f'Email sent to "{email}"')
+
+
 @router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+def create_user(user: UserCreate,background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     existing_user_username = db.query(User).filter(User.username == user.username).first()
 
     if existing_user_username:
@@ -40,6 +48,8 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    background_tasks.add_task(send_welcome_email, new_user.email)
 
     return new_user
 
